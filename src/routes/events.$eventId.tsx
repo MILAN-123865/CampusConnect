@@ -97,56 +97,30 @@ import { ActivePoll } from "@/components/polls/ActivePoll";
 import { SteganographicQRScanner } from "@/components/SteganographicQRScanner";
 import { CaptchaWidget } from "@/components/CaptchaWidget";
 import { Blurhash } from "react-blurhash";
-import { isValidBlurhash, DEFAULT_FALLBACK_BLURHASH } from "@/lib/blurhashUtils";
+import { getThumbnailUrl } from "@/lib/imageUtils";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
 
 /**
  * Hero banner for the event detail page.
- * Shows a BlurHash placeholder immediately, then cross-fades to the full
- * OptimizedImage once it loads.  OptimizedImage is kept so we retain its
- * AVIF/WebP/responsive-srcset capabilities on the large hero image.
+ * Shows a tiny blurred thumbnail immediately, then cross-fades to the full
+ * high-res banner once it loads.
  */
 function EventHeroBanner({
   bannerUrl,
-  blurhash,
   title,
 }: {
   bannerUrl: string;
-  blurhash?: string | null;
   title: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
-  const hash = isValidBlurhash(blurhash) ? (blurhash as string) : DEFAULT_FALLBACK_BLURHASH;
+  const thumbUrl = getThumbnailUrl(bannerUrl);
 
   return (
-    <>
-      {/* BlurHash canvas — removed from DOM once real image loads */}
-      {!loaded && (
-        <div className="absolute inset-0 z-0" aria-hidden="true">
-          <Blurhash
-            hash={hash}
-            width="100%"
-            height="100%"
-            resolutionX={32}
-            resolutionY={32}
-            punch={1}
-          />
-        </div>
-      )}
-      <OptimizedImage
-        src={bannerUrl}
-        alt={`${title} event banner`}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
-        width={1344}
-        height={700}
-        responsiveWidths={[448, 672, 896, 1344]}
-        sizes="100vw"
-        priority
-        onLoad={() => setLoaded(true)}
-        fallback={
-          <div className="h-full w-full bg-linear-to-br from-peach via-pink-200 to-lime/40" />
-        }
-      />
-    </>
+    <ProgressiveImage
+      src={bannerUrl}
+      placeholder={thumbUrl}
+      alt={`${title} event banner`}
+      className="absolute inset-0 z-0 h-full w-full object-cover"
+    />
   );
 }
 
@@ -1180,7 +1154,6 @@ export default function EventDetailsPage() {
           <div className="absolute inset-0">
             <EventHeroBanner
               bannerUrl={event.banner_url}
-              blurhash={(event as { blurhash?: string | null }).blurhash}
               title={event.title}
             />
             <div className="absolute inset-0 bg-black/50" />
