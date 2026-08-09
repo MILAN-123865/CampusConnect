@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
 import { verifyAuth } from "../shared/auth-middleware.ts";
 import { limitRate } from "../shared/rate_limiter.ts";
+import { outboundCommunicationLimiter } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,8 +19,11 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Rate Limiting: 5 requests per minute per IP
-  const rateLimitResponse = await limitRate(req, "send-event-emails", { limit: 5, windowMs: 60000 });
+  // Rate Limiting: 30 requests per minute per IP
+  const rateLimitResponse = await limitRate(req, "send-event-emails", {
+    limit: 30,
+    windowMs: 60000,
+  });
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -49,11 +53,26 @@ serve(async (req) => {
       });
     }
 
+    // --- Outbound Communication Rate Limiting ---
+    const ipAddress = req.headers.get("x-forwarded-for") || "unknown-ip";
+    const identifier = user?.id || ipAddress;
+    const { success } = await outboundCommunicationLimiter.limit(identifier);
+
+    if (!success) {
+      console.warn(`[RateLimit] Outbound communication blocked for identifier: ${identifier}`);
+      return new Response(
+        JSON.stringify({ error: "Too Many Requests. Maximum 5 requests per 15 minutes." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    // --------------------------------------------
+
     // Fetch Event Details
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select("*, clubs(name)")
       .eq("id", event_id)
+      .is("deleted_at", null)
       .single();
 
     if (eventError || !event) {
