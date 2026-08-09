@@ -27,6 +27,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
+import { RoleRoute } from "@/components/auth/RoleRoute";
 
 // ⚠️ Adjust if your Supabase Storage bucket for club banners has a different name
 const BUCKET_NAME = "club-banners";
@@ -43,7 +44,7 @@ interface ServerClub {
   version: number;
 }
 
-export default function ClubManageRoute() {
+function ClubManageContent() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
   const supabase = createClient();
@@ -825,5 +826,13 @@ export default function ClubManageRoute() {
         </AlertDialogContent>
       </AlertDialog>
     </SiteShell>
+  );
+}
+
+export default function ClubManageRoute() {
+  return (
+    <RoleRoute allowedRoles={["ADMIN", "MODERATOR"]}>
+      <ClubManageContent />
+    </RoleRoute>
   );
 }

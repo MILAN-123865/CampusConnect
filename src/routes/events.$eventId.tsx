@@ -91,6 +91,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { isCaptchaConfigured, shouldRequireCaptcha } from "@/lib/captcha";
 import { EditEventDialog } from "@/components/EditEventDialog";
+import { RequirePermission } from "@/components/auth/RequirePermission";
+import { useClubRole } from "@/hooks/useClubRole";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { CreatePollDialog } from "@/components/polls/CreatePollDialog";
 import { ActivePoll } from "@/components/polls/ActivePoll";
@@ -820,6 +822,7 @@ export default function EventDetailsPage() {
   });
 
   const isOrganizer = !!(user && event?.created_by === user.id);
+  const { data: userClubRole } = useClubRole(event?.club_id);
 
   useEffect(() => {
     if (!eventId || eventId.startsWith("mock-") || !event) return;
@@ -1381,8 +1384,12 @@ export default function EventDetailsPage() {
                   <Download className="mr-2 h-4 w-4" />
                   {exportCsv.isPending ? "Exporting..." : "Export CSV"}
                 </Button>
-                <CreatePollDialog eventId={eventId} user={user!} onPollCreated={() => refetch()} />
-                <EditEventDialog event={event} user={user} onSuccess={() => refetch()} />
+                <RequirePermission allowedRoles={["ADMIN", "MODERATOR"]} userRole={userClubRole}>
+                  <CreatePollDialog eventId={eventId} user={user!} onPollCreated={() => refetch()} />
+                </RequirePermission>
+                <RequirePermission allowedRoles={["ADMIN", "MODERATOR", "EDITOR"]} userRole={userClubRole}>
+                  <EditEventDialog event={event} user={user} onSuccess={() => refetch()} />
+                </RequirePermission>
               </>
             )}
 
