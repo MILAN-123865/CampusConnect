@@ -151,7 +151,6 @@ export function CreateEventDialog({
       });
   }, [user]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<any>({
     resolver: zodResolver(eventFormSchema),
     defaultValues,
@@ -518,7 +517,10 @@ export function CreateEventDialog({
                       </FormLabel>
                       <FormControl>
                         <MultiSelect
-                          value={(field.value || []).map((tag: string) => ({ value: tag, label: tag }))}
+                          value={(field.value || []).map((tag: string) => ({
+                            value: tag,
+                            label: tag,
+                          }))}
                           onChange={(tags) => field.onChange(tags.map((t) => t.value))}
                           options={DEFAULT_EVENT_TAG_OPTIONS}
                           placeholder="Select or type event tags (e.g. #Tech, #Career)..."
@@ -857,6 +859,26 @@ export function CreateEventDialog({
                         </FormLabel>
                         <p className="text-xs text-black/50">
                           Organizers must manually approve attendee RSVPs.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="isResumeRequired"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border-2 border-black bg-white p-4 shadow-sm">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-bold cursor-pointer">
+                          Require Resume Drop
+                        </FormLabel>
+                        <p className="text-xs text-black/50">
+                          Attendees must upload a PDF resume when RSVPing.
                         </p>
                       </div>
                     </FormItem>

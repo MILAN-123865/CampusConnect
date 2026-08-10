@@ -9,6 +9,8 @@ import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from "react
 import { LazyMotion, m } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { uploadFileWithProgress } from "@/lib/supabase/uploadFileWithProgress";
+import { ResumeDropzone } from "@/components/resume/ResumeDropzone";
+import { ResumeUploadPreview } from "@/components/resume/ResumeUploadPreview";
 import { useCommand } from "@/components/CommandPaletteProvider";
 import { TableOfContents } from "@/components/events/TableOfContents";
 import { buildOpenGraphTags } from "@/lib/seo/eventMeta";
@@ -250,6 +252,9 @@ export default function EventDetailsPage() {
   const { copyToClipboard: copyEventId, isCopied: isEventIdCopied } = useCopyToClipboard();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeUploadProgress, setResumeUploadProgress] = useState(0);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
@@ -856,7 +861,6 @@ export default function EventDetailsPage() {
       if (!variables.hasRsvpd && event?.banner_url && "caches" in window) {
         window.caches.open("supabase-images-cache").then((cache) => {
           cache.add((event as any).banner_url!).catch((err) => {
-            // eslint-disable-next-line no-console
             console.error("Failed to eagerly cache banner image", err);
           });
         });
@@ -1246,7 +1250,7 @@ export default function EventDetailsPage() {
   const captchaEnabled = isCaptchaConfigured(captchaSiteKey, captchaSecretKey);
   const captchaProvider = import.meta.env.VITE_TURNSTILE_SITE_KEY ? "turnstile" : "hcaptcha";
 
-  const handleRsvpClick = () => {
+  const handleRsvpClick = async () => {
     if (!user) {
       toast.error("Please log in to RSVP");
       return;
@@ -1270,7 +1274,50 @@ export default function EventDetailsPage() {
       return;
     }
 
-    toggleRsvp.mutate({ eventId: (event as any).id, hasRsvpd: false, captchaToken });
+    const isResumeRequired = (event as any).is_resume_required;
+    let finalResumePath = undefined;
+
+    if (isResumeRequired) {
+      if (!resumeFile) {
+        toast.error("A resume is required for this event.");
+        return;
+      }
+
+      try {
+        setIsUploadingResume(true);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not logged in");
+
+        const fileExt = resumeFile.name.split(".").pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `${(event as any).id}/${user.id}/${fileName}`;
+
+        await uploadFileWithProgress(
+          import.meta.env.VITE_SUPABASE_URL,
+          session.access_token,
+          "resumes",
+          filePath,
+          resumeFile,
+          (percent) => setResumeUploadProgress(percent),
+        );
+        finalResumePath = filePath;
+      } catch (error: any) {
+        toast.error(`Failed to upload resume: ${error.message}`);
+        setIsUploadingResume(false);
+        return;
+      } finally {
+        setIsUploadingResume(false);
+      }
+    }
+
+    toggleRsvp.mutate({
+      eventId: (event as any).id,
+      hasRsvpd: false,
+      captchaToken,
+      resumePath: finalResumePath,
+    });
   };
 
   const handleCopyLink = async () => {
@@ -1508,14 +1555,33 @@ export default function EventDetailsPage() {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-4">
+                  {(event as any).is_resume_required && !hasRsvpd && (
+                    <div className="flex flex-col gap-2 min-w-[300px]">
+                      <span
+                        className={`font-mono text-xs font-bold ${(event as any).banner_url ? "text-white/80" : "text-black/60"}`}
+                      >
+                        Resume Required
+                      </span>
+                      {resumeFile ? (
+                        <ResumeUploadPreview
+                          file={resumeFile}
+                          onRemove={() => setResumeFile(null)}
+                          progress={resumeUploadProgress}
+                          isUploaded={false}
+                        />
+                      ) : (
+                        <ResumeDropzone onFileSelect={setResumeFile} />
+                      )}
+                    </div>
+                  )}
                   <Button
                     onClick={handleRsvpClick}
-                    disabled={toggleRsvp.isPending}
+                    disabled={toggleRsvp.isPending || isUploadingResume}
                     variant="primary"
                     size="lg"
                   >
-                    {toggleRsvp.isPending ? "Updating..." : "RSVP NOW"}
+                    {toggleRsvp.isPending || isUploadingResume ? "Updating..." : "RSVP NOW"}
                   </Button>
                   {captchaEnabled && (
                     <div className="flex flex-col gap-2">

@@ -11,6 +11,8 @@ import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../ui/card";
 import { CalendarIcon, MapPin, Save, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Switch } from "../ui/switch";
+import { Controller } from "react-hook-form";
 import { Calendar } from "../ui/calendar";
 import format from "date-fns/format";
 import { cn } from "../../lib/utils";
@@ -33,6 +35,7 @@ export const EventForm: React.FC<EventFormProps> = ({ onSubmit, defaultValues })
       title: "",
       description: "",
       location: "",
+      isResumeRequired: false,
       tickets: [],
       ...defaultValues,
     },
@@ -173,6 +176,22 @@ export const EventForm: React.FC<EventFormProps> = ({ onSubmit, defaultValues })
                   <p className="text-xs text-destructive">{errors.endDate.message}</p>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label className="text-base">Require Resume</Label>
+                <p className="text-sm text-muted-foreground">
+                  Attendees must upload a PDF resume when RSVPing to this event.
+                </p>
+              </div>
+              <Controller
+                control={form.control}
+                name="isResumeRequired"
+                render={({ field }) => (
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
             </div>
           </CardContent>
         </Card>

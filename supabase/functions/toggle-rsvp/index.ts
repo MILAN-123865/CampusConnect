@@ -11,6 +11,7 @@ const toggleRsvpSchema = z
     eventId: z.string().uuid("eventId must be a valid UUID"),
     hasRsvpd: z.boolean().optional(),
     captchaToken: z.string().optional(),
+    resumePath: z.string().optional(),
   })
   .strict();
 
@@ -75,7 +76,7 @@ serve(async (req: Request) => {
 
     const parsed = await parseJsonBody(toggleRsvpSchema, req);
     if (!parsed.ok) return parsed.response;
-    const { eventId, hasRsvpd, captchaToken } = parsed.data;
+    const { eventId, hasRsvpd, captchaToken, resumePath } = parsed.data;
 
     const siteKey = Deno.env.get("TURNSTILE_SITE_KEY") || Deno.env.get("HCAPTCHA_SITE_KEY");
     const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY") || Deno.env.get("HCAPTCHA_SECRET_KEY");
@@ -153,6 +154,13 @@ serve(async (req: Request) => {
         }
 
         if (data === "SUCCESS") {
+          if (resumePath) {
+            await supabase
+              .from("event_rsvps")
+              .update({ resume_path: resumePath })
+              .match({ event_id: eventId, user_id: user.id });
+          }
+
           return new Response(JSON.stringify({ success: true, status: "approved" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,

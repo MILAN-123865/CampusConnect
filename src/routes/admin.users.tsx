@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";import { Navigate } from "react-router-dom";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Navigate } from "react-router-dom";
 import { SiteShell } from "@/components/site/SiteShell";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -54,7 +55,8 @@ export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-const [limit] = useState(10000);  const [sortBy, setSortBy] = useState<string>("full_name");
+  const [limit] = useState(10000);
+  const [sortBy, setSortBy] = useState<string>("full_name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -114,7 +116,7 @@ const [limit] = useState(10000);  const [sortBy, setSortBy] = useState<string>("
           totalProfiles
         }
       `;
-const variables = {
+      const variables = {
         limit,
         offset: 0,
         sortBy,
@@ -139,7 +141,7 @@ const variables = {
     } finally {
       setLoading(false);
     }
-}, [authChecked, role, limit, sortBy, sortOrder]);
+  }, [authChecked, role, limit, sortBy, sortOrder]);
   useEffect(() => {
     void loadProfiles();
   }, [loadProfiles]);
@@ -180,7 +182,7 @@ const variables = {
       setSortBy(field);
       setSortOrder("asc");
     }
-};
+  };
   // Bulk Suspend action
   const handleBulkSuspend = async () => {
     if (selectedIds.size === 0) return;
@@ -241,7 +243,7 @@ const variables = {
     );
   }
 
-const currentPageIds = profiles.map((p) => p.id);
+  const currentPageIds = profiles.map((p) => p.id);
   const allCurrentSelected =
     currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id));
 
@@ -295,8 +297,10 @@ const currentPageIds = profiles.map((p) => p.id);
                 <span className="text-sm font-bold uppercase">Loading profiles...</span>
               </div>
             ) : (
-<div ref={parentRef} className="overflow-auto" style={{ height: "600px" }}>
-                <table className="w-full text-left border-collapse">                  <thead>
+              <div ref={parentRef} className="overflow-auto" style={{ height: "600px" }}>
+                <table className="w-full text-left border-collapse">
+                  {" "}
+                  <thead>
                     <tr className="border-b-4 border-black font-bold uppercase text-sm">
                       <th className="py-4 px-3 w-12 text-center">
                         <input
@@ -364,10 +368,11 @@ const currentPageIds = profiles.map((p) => p.id);
                       </th>
                     </tr>
                   </thead>
-<tbody
+                  <tbody
                     style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
                   >
-                    {profiles.length === 0 ? (                      <tr>
+                    {profiles.length === 0 ? (
+                      <tr>
                         <td
                           colSpan={5}
                           className="py-12 text-center text-gray-500 font-bold uppercase"
@@ -376,7 +381,7 @@ const currentPageIds = profiles.map((p) => p.id);
                         </td>
                       </tr>
                     ) : (
-rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      rowVirtualizer.getVirtualItems().map((virtualRow) => {
                         const profile = profiles[virtualRow.index];
                         const isSelected = selectedIds.has(profile.id);
                         const isSuspended =
@@ -398,7 +403,9 @@ rowVirtualizer.getVirtualItems().map((virtualRow) => {
                             className={`border-b-2 border-black font-semibold text-sm hover:bg-cream/20 transition-colors ${
                               isSelected ? "bg-lime/5" : ""
                             }`}
-                          >                            <td className="py-4 px-3 text-center">
+                          >
+                            {" "}
+                            <td className="py-4 px-3 text-center">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -434,11 +441,11 @@ rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 </table>
               </div>
             )}
-
-{/* Row count summary — pagination replaced by virtual scrolling */}
+            {/* Row count summary — pagination replaced by virtual scrolling */}
             <div className="mt-6 flex items-center border-t-2 border-black pt-6 text-sm font-bold">
               <div>Showing all {total} users</div>
-            </div>          </div>
+            </div>{" "}
+          </div>
         </div>
       </div>
       <BulkUserImportModal

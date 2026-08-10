@@ -1115,7 +1115,6 @@ export default function EventsList() {
               <section className="bg-cream px-4 py-12 md:px-6">
                 {viewMode === "list" ? (
                   <>
- feat/redis-trending-scores-2005
                     {(isTrendingLoading || (trendingEvents && trendingEvents.length > 0)) &&
                       filter === "All" &&
                       !searchQuery && (
@@ -1158,7 +1157,6 @@ export default function EventsList() {
                     <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-2 lg:grid-cols-3">
 
                     <AnimatePresence mode="sync">
- main
                       {isLoading ? (
                         <motion.div
                           key="events-loading-skeletons"

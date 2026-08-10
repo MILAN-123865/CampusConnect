@@ -25,7 +25,10 @@ export const DEFAULT_EVENT_TAGS = [
   "Academic",
 ];
 
-export const DEFAULT_EVENT_TAG_OPTIONS = DEFAULT_EVENT_TAGS.map(tag => ({ value: tag, label: tag }));
+export const DEFAULT_EVENT_TAG_OPTIONS = DEFAULT_EVENT_TAGS.map((tag) => ({
+  value: tag,
+  label: tag,
+}));
 
 export const TITLE_MAX_LENGTH = 100;
 
@@ -59,6 +62,7 @@ export const eventFormSchema = z
       .optional()
       .default([]),
     tags: z.array(z.string()).optional().default([]),
+    isResumeRequired: z.boolean().optional().default(false),
   })
   .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
     message: "End date must be after the start date.",
@@ -170,6 +174,7 @@ export function eventFormToDbPayload(
     created_by: userId,
     club_id: clubId,
     requires_approval: values.requiresApproval || false,
+    is_resume_required: values.isResumeRequired || false,
     tags: values.tags || [],
   };
 }

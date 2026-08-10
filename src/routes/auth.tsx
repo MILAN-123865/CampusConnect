@@ -494,11 +494,7 @@ export default function AuthPage() {
                   <Button
                     type="submit"
 
-                    disabled={
-  loading ||
-  !captchaToken ||
-  passwordResult.score < 3
-}
+                    disabled={loading || !captchaToken || passwordResult.score < 3}
 
                     variant="primary"
                     className="w-full bg-black text-cream hover:bg-black/90 cursor-pointer shadow-[3px_3px_0_0_var(--color-ink)]"

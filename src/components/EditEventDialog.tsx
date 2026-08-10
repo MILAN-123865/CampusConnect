@@ -6,7 +6,12 @@ import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
-import { eventFormSchema, TITLE_MAX_LENGTH, DEFAULT_EVENT_TAG_OPTIONS, type EventFormValues } from "@/lib/eventUtils";
+import {
+  eventFormSchema,
+  TITLE_MAX_LENGTH,
+  DEFAULT_EVENT_TAG_OPTIONS,
+  type EventFormValues,
+} from "@/lib/eventUtils";
 import { useQuery } from "@/hooks/useReactQueryReplacement";
 import {
   EventDocument,
@@ -42,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { MultiSelect } from "@/components/MultiSelect";
 import { DateTimePicker } from "@/components/DateTimePicker";
@@ -78,7 +84,6 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
     staleTime: 1000 * 60 * 30,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<any>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -89,6 +94,7 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
       startDate: event.start_date ? new Date(event.start_date).toISOString().slice(0, 16) : "",
       endDate: event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : "",
       tags: event.tags || [],
+      isResumeRequired: (event as any).is_resume_required || false,
     },
     mode: "onBlur",
   });
@@ -106,6 +112,7 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
         startDate: event.start_date ? new Date(event.start_date).toISOString().slice(0, 16) : "",
         endDate: event.end_date ? new Date(event.end_date).toISOString().slice(0, 16) : "",
         tags: event.tags || [],
+        isResumeRequired: (event as any).is_resume_required || false,
       });
     }
   }, [open, event, form]);
@@ -131,6 +138,7 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
           end_date: docToSave.end_date,
           event_date: docToSave.start_date,
           tags: docToSave.tags || [],
+          is_resume_required: (docToSave as any).is_resume_required || false,
           version_vector: docToSave.version_vector || {},
           version: docToSave.version || 1,
         })
@@ -224,6 +232,7 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
         start_date: new Date(values.startDate).toISOString(),
         end_date: new Date(values.endDate).toISOString(),
         tags: values.tags || [],
+        is_resume_required: values.isResumeRequired || false,
         version_vector: (baseSnapshot.version_vector || {}) as VersionVector,
       };
 
@@ -345,7 +354,10 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
                     </FormLabel>
                     <FormControl>
                       <MultiSelect
-                        value={(field.value || []).map((tag: string) => ({ value: tag, label: tag }))}
+                        value={(field.value || []).map((tag: string) => ({
+                          value: tag,
+                          label: tag,
+                        }))}
                         onChange={(tags) => field.onChange(tags.map((t) => t.value))}
                         options={DEFAULT_EVENT_TAG_OPTIONS}
                         placeholder="Select or type event tags (e.g. #Tech, #Career)..."
@@ -400,6 +412,26 @@ export function EditEventDialog({ event, user, onSuccess }: EditEventDialogProps
                   )}
                 />
               </div>
+
+              <FormField
+                control={control}
+                name="isResumeRequired"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border-2 border-black bg-white p-4 shadow-sm">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="font-bold cursor-pointer">
+                        Require Resume Drop
+                      </FormLabel>
+                      <p className="text-xs text-black/50">
+                        Attendees must upload a PDF resume when RSVPing.
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
 
               <DialogFooter className="pt-2">
                 <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">

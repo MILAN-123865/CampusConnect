@@ -67,6 +67,7 @@ export const eventFormSchema = z
     endDate: z.date({
       required_error: "End date is required",
     }),
+    isResumeRequired: z.boolean().default(false).optional(),
     tickets: z
       .array(ticketTierSchema)
       .min(1, "You must create at least one ticket tier")
