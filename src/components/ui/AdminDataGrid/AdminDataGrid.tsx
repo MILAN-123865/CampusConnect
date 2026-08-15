@@ -29,17 +29,15 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
-  Download,
-  Eye,
-  EyeOff,
-  Loader2,
-  GripVertical,
-  X,
-} from "lucide-react";
+import ArrowUp from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDown from "lucide-react/dist/esm/icons/arrow-down";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-up-down";
+import Download from "lucide-react/dist/esm/icons/download";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import EyeOff from "lucide-react/dist/esm/icons/eye-off";
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import GripVertical from "lucide-react/dist/esm/icons/grip-vertical";
+import X from "lucide-react/dist/esm/icons/x";
 import { FilterBar, type FilterRule, type FilterOperator } from "./FilterBar";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@/components/ui/context-menu";
 import { useHasTextSelection } from "@/hooks/useHasTextSelection";
@@ -550,6 +548,28 @@ export function AdminDataGrid<TData>({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
+          accessibility={{
+            announcements: {
+              onDragStart({ active }) {
+                return `Column ${active.id} selected.`;
+              },
+              onDragOver({ active, over }) {
+                if (over) {
+                  return `Column ${active.id} moved over column ${over.id}.`;
+                }
+                return `Column ${active.id} is no longer over a droppable area.`;
+              },
+              onDragEnd({ active, over }) {
+                if (over) {
+                  return `Column ${active.id} was dropped over column ${over.id}.`;
+                }
+                return `Column ${active.id} was dropped.`;
+              },
+              onDragCancel({ active }) {
+                return `Dragging was cancelled. Column ${active.id} was dropped.`;
+              },
+            },
+          }}
         >
           <table
             className="w-full border-collapse table-fixed"

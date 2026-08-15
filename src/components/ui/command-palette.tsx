@@ -1,19 +1,16 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Command } from "cmdk";
-import {
-  Calendar,
-  Compass,
-  Home,
-  Settings,
-  Search,
-  ShieldAlert,
-  User,
-  Bookmark,
-  ChevronLeft,
-  ArrowRight,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Compass from "lucide-react/dist/esm/icons/compass";
+import Home from "lucide-react/dist/esm/icons/home";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import Search from "lucide-react/dist/esm/icons/search";
+import ShieldAlert from "lucide-react/dist/esm/icons/shield-alert";
+import User from "lucide-react/dist/esm/icons/user";
+import Bookmark from "lucide-react/dist/esm/icons/bookmark";
+import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import { useCommandPalette } from "@/components/CommandPaletteProvider";
 import { useCommandPaletteSearch } from "@/hooks/useCommandPaletteSearch";
 
@@ -64,46 +61,21 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, setIsOpen]);
 
+  // Allow external triggers (e.g. the mobile navbar search button) to open the
+  // palette without having to dispatch a synthetic Cmd+K keydown event.
+  React.useEffect(() => {
+    const handleOpenRequest = () => setIsOpen(true);
+    window.addEventListener("open-command-palette", handleOpenRequest);
+    return () => window.removeEventListener("open-command-palette", handleOpenRequest);
+  }, [setIsOpen]);
+
   const [fallbackClubs, setFallbackClubs] = React.useState<any[]>([]);
   const [fallbackEvents, setFallbackEvents] = React.useState<any[]>([]);
   const [fallbackUsers, setFallbackUsers] = React.useState<any[]>([]);
 
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const supabase = createClient();
-    if (activePage === "clubs" && fallbackClubs.length === 0) {
-      supabase
-        .from("clubs")
-        .select("id, name, slug")
-        .limit(10)
-        .then(({ data }) => {
-          if (data) setFallbackClubs(data);
-        });
-    }
-    if (activePage === "events" && fallbackEvents.length === 0) {
-      supabase
-        .from("events")
-        .select("id, title")
-        .order("event_date", { ascending: false })
-        .limit(10)
-        .then(({ data }) => {
-          if (data) setFallbackEvents(data);
-        });
-    }
-    if (activePage === "users" && fallbackUsers.length === 0) {
-      supabase
-        .from("profiles")
-        .select("id, handle, first_name, last_name")
-        .limit(10)
-        .then(({ data }) => {
-          if (data) setFallbackUsers(data);
-        });
-    }
-  }, [isOpen, activePage, fallbackClubs.length, fallbackEvents.length, fallbackUsers.length]);
-
   const searchQuery = activePage === "home" ? query : `${activePage}:${query}`;
-  const { results, isLoading } = useCommandPaletteSearch(searchQuery);
 
+  const { results, isLoading } = useCommandPaletteSearch(searchQuery);
   const handleSelect = (path: string) => {
     setIsOpen(false);
     navigate(path);
@@ -165,7 +137,6 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
               ESC
             </kbd>
           </div>
-
           <Command.List className="max-h-[300px] overflow-y-auto p-2 bg-cream">
             {isLoading && (
               <div className="px-3 py-2 font-mono text-xs text-gray-500">Searching...</div>
@@ -179,7 +150,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
 
             {activePage === "home" && !query && (
               <>
-                <Command.Group heading="Sub-Searches" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1">
+                <Command.Group
+                  heading="Sub-Searches"
+                  className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1"
+                >
                   <Command.Item
                     value="search-clubs"
                     onSelect={() => {
@@ -226,7 +200,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
                   </Command.Item>
                 </Command.Group>
 
-                <Command.Group heading="Navigation" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1 mt-2">
+                <Command.Group
+                  heading="Navigation"
+                  className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1 mt-2"
+                >
                   {navigationItems.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -244,7 +221,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
                 </Command.Group>
 
                 {commands.length > 0 && (
-                  <Command.Group heading="Actions" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1 mt-2">
+                  <Command.Group
+                    heading="Actions"
+                    className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1 mt-2"
+                  >
                     {commands.map((cmd) => {
                       const Icon = cmd.icon;
                       return (
@@ -265,25 +245,43 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
             )}
 
             {query && results.length > 0 && (
-              <Command.Group heading="Results" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1">
-                {results.map((result) => (
-                  <Command.Item
-                    key={result.id}
-                    value={result.label}
-                    onSelect={() => handleSelect(result.path)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-sm font-mono font-bold text-black border-2 border-transparent data-[selected=true]:border-black data-[selected=true]:bg-lime data-[selected=true]:shadow-[2px_2px_0_0_#000] cursor-pointer text-left transition-all"
-                  >
-                    <span>{result.label}</span>
-                    <span className="font-mono text-[10px] font-black uppercase text-gray-500 bg-white border border-black px-1">
-                      {result.sublabel}
-                    </span>
-                  </Command.Item>
-                ))}
-              </Command.Group>
+              <>
+                {(["event", "club", "person"] as const).map((type) => {
+                  const typed = results.filter((r) => r.type === type);
+                  if (typed.length === 0) return null;
+                  const heading = type === "event" ? "Events" : type === "club" ? "Clubs" : "Users";
+                  const TypeIcon = type === "event" ? Calendar : type === "club" ? Compass : User;
+                  return (
+                    <Command.Group
+                      key={type}
+                      heading={heading}
+                      className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1 mt-2"
+                    >
+                      {typed.map((result) => (
+                        <Command.Item
+                          key={result.id}
+                          value={result.label}
+                          onSelect={() => handleSelect(result.path)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm font-mono font-bold text-black border-2 border-transparent data-[selected=true]:border-black data-[selected=true]:bg-lime data-[selected=true]:shadow-[2px_2px_0_0_#000] cursor-pointer text-left transition-all"
+                        >
+                          <TypeIcon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1 truncate">{result.label}</span>
+                          <span className="font-mono text-[10px] font-black uppercase text-gray-500 bg-white border border-black px-1">
+                            {result.sublabel}
+                          </span>
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+                  );
+                })}
+              </>
             )}
 
             {!query && activePage === "clubs" && (
-              <Command.Group heading="Popular Clubs" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1">
+              <Command.Group
+                heading="Popular Clubs"
+                className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1"
+              >
                 {fallbackClubs.map((club) => (
                   <Command.Item
                     key={club.id}
@@ -299,7 +297,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
             )}
 
             {!query && activePage === "events" && (
-              <Command.Group heading="Recent Events" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1">
+              <Command.Group
+                heading="Recent Events"
+                className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1"
+              >
                 {fallbackEvents.map((evt) => (
                   <Command.Item
                     key={evt.id}
@@ -315,7 +316,10 @@ export function CommandPalette({ open: externalOpen, onOpenChange }: CommandPale
             )}
 
             {!query && activePage === "users" && (
-              <Command.Group heading="Recent Users" className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1">
+              <Command.Group
+                heading="Recent Users"
+                className="font-mono text-[10px] font-black uppercase text-gray-500 px-2 py-1"
+              >
                 {fallbackUsers.map((user) => {
                   const name = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
                   const displayName = name || `@${user.handle}`;

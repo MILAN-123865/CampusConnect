@@ -9,9 +9,14 @@ import { NavbarNotificationDropdown } from "./NavbarNotificationDropdown";
 import { BookmarksPanel } from "@/components/BookmarksPanel";
 import { createClient } from "@/lib/supabase/client";
 
-import { Menu, X, WifiOff, Bookmark } from "lucide-react";
+import Menu from "lucide-react/dist/esm/icons/menu";
+import X from "lucide-react/dist/esm/icons/x";
+import WifiOff from "lucide-react/dist/esm/icons/wifi-off";
+import Bookmark from "lucide-react/dist/esm/icons/bookmark";
+import Search from "lucide-react/dist/esm/icons/search";
 import { useAuthHydration } from "@/hooks/useAuthHydration";
 import { ProfileHeaderSkeleton } from "@/components/ProfileHeaderSkeleton";
+import { openCommandPalette } from "@/lib/commandPalette";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,11 +26,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const links = [
+  { to: "/events", label: "Events" },
+  { to: "/clubs", label: "Clubs" },
+  { to: "/feed", label: "Feed" },
+  { to: "/gallery", label: "Gallery" },
+  { to: "/certificates", label: "Certificates" },
+  { to: "/dashboard", label: "Dashboard" },
+] as const;
+
 export function Navbar() {
   const { user, isInitializing } = useAuthHydration();
-  const handleSignOut = () => {
-    // TODO: wire to actual sign out
-  };
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const currentPath = location.pathname;
@@ -292,6 +303,17 @@ export function Navbar() {
               Sign in
             </Link>
           )}
+
+          {/* Global search (Cmd+K) trigger — highly visible on mobile where the
+              keyboard shortcut does not exist */}
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label="Open global search"
+            className="neu-border flex h-8 w-8 shrink-0 items-center justify-center bg-white p-1 text-black transition-colors hover:bg-lime dark:bg-black dark:text-cream"
+          >
+            <Search size={18} />
+          </button>
 
           {/* Mobile menu toggle button */}
           <button
