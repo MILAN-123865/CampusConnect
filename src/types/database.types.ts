@@ -1072,7 +1072,7 @@ export type Database = {
           id: string;
           club_id: string;
           user_id: string;
-          role: "member" | "admin" | "owner";
+          role: "VIEWER" | "EDITOR" | "MODERATOR" | "ADMIN";
           status: "pending" | "approved" | "rejected";
           joined_at: string | null;
           removed_at: string | null;
@@ -1090,7 +1090,7 @@ export type Database = {
           id?: string;
           club_id: string;
           user_id: string;
-          role?: "member" | "admin" | "owner";
+          role?: "VIEWER" | "EDITOR" | "MODERATOR" | "ADMIN";
           status?: "pending" | "approved" | "rejected";
           joined_at?: string | null;
           removed_at?: string | null;
@@ -1108,7 +1108,7 @@ export type Database = {
           id?: string;
           club_id?: string;
           user_id?: string;
-          role?: "member" | "admin" | "owner";
+          role?: "VIEWER" | "EDITOR" | "MODERATOR" | "ADMIN";
           status?: "pending" | "approved" | "rejected";
           joined_at?: string | null;
           removed_at?: string | null;

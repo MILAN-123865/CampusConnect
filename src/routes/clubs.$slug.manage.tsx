@@ -50,6 +50,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
+import { RoleRoute } from "@/components/auth/RoleRoute";
 
 const BUCKET_NAME = "club-banners";
 
@@ -68,7 +69,7 @@ interface ServerClub {
   status: string;
 }
 
-export default function ClubManageRoute() {
+function ClubManageContent() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
   const supabase = createClient();
@@ -1120,5 +1121,13 @@ export default function ClubManageRoute() {
         </AlertDialogContent>
       </AlertDialog>
     </SiteShell>
+  );
+}
+
+export default function ClubManageRoute() {
+  return (
+    <RoleRoute allowedRoles={["ADMIN", "MODERATOR"]}>
+      <ClubManageContent />
+    </RoleRoute>
   );
 }

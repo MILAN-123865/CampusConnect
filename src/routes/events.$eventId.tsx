@@ -124,31 +124,39 @@ import {
 import DynamicQRCode from "@/components/events/DynamicQRCode";
 import { isCaptchaConfigured, shouldRequireCaptcha } from "@/lib/captcha";
 import { EditEventDialog } from "@/components/EditEventDialog";
+ feature/3180-live-subtitles
 import { DynamicEventPoster } from "@/components/events/DynamicEventPoster";
+
+import { RequirePermission } from "@/components/auth/RequirePermission";
+import { useClubRole } from "@/hooks/useClubRole";
+ main
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { CreatePollDialog } from "@/components/polls/CreatePollDialog";
 import { ActivePoll } from "@/components/polls/ActivePoll";
 import { SteganographicQRScanner } from "@/components/SteganographicQRScanner";
 import { CaptchaWidget } from "@/components/CaptchaWidget";
 import { Blurhash } from "react-blurhash";
+ feature/3180-live-subtitles
 import { isValidBlurhash, DEFAULT_FALLBACK_BLURHASH } from "@/lib/blurhashUtils";
 import { EventDescriptionTranslation } from "@/components/events/EventDescriptionTranslation";
 
+import { getThumbnailUrl } from "@/lib/imageUtils";
+import { ProgressiveImage } from "@/components/ProgressiveImage";
+ main
+
 /**
  * Hero banner for the event detail page.
- * Shows a BlurHash placeholder immediately, then cross-fades to the full
- * OptimizedImage once it loads.  OptimizedImage is kept so we retain its
- * AVIF/WebP/responsive-srcset capabilities on the large hero image.
+ * Shows a tiny blurred thumbnail immediately, then cross-fades to the full
+ * high-res banner once it loads.
  */
 function EventHeroBanner({
   bannerUrl,
-  blurhash,
   title,
 }: {
   bannerUrl: string;
-  blurhash?: string | null;
   title: string;
 }) {
+ feature/3180-live-subtitles
   const [loaded, setLoaded] = useState(false);
   const { gradientStyle } = useBannerColor(bannerUrl);
   const hash = isValidBlurhash(blurhash) ? (blurhash as string) : DEFAULT_FALLBACK_BLURHASH;
@@ -189,6 +197,17 @@ function EventHeroBanner({
         }
       />
     </>
+
+  const thumbUrl = getThumbnailUrl(bannerUrl);
+
+  return (
+    <ProgressiveImage
+      src={bannerUrl}
+      placeholder={thumbUrl}
+      alt={`${title} event banner`}
+      className="absolute inset-0 z-0 h-full w-full object-cover"
+    />
+ main
   );
 }
 
@@ -1115,6 +1134,7 @@ export default function EventDetailsPage() {
 
   const isOrganizer = user && event?.created_by === user.id;
   const isOrganizer = !!(user && event?.created_by === user.id);
+  const { data: userClubRole } = useClubRole(event?.club_id);
 
   useEffect(() => {
     if (!eventId || eventId.startsWith("mock-") || !event) return;
@@ -1549,6 +1569,7 @@ export default function EventDetailsPage() {
     attendeeCount >= maxAttendees;
 
   return (
+ feature/3180-live-subtitles
     <>
       <Helmet>
         <title>{ogTags.ogTitle}</title>
@@ -1567,6 +1588,60 @@ export default function EventDetailsPage() {
             <meta property="og:image:height" content="630" />
             <meta property="og:image:type" content="image/png" />
           </>
+
+    <SiteShell>
+      {/* Breadcrumb nav */}
+      <nav className="border-b-2 border-black bg-white px-4 py-4 md:px-6" aria-label="Breadcrumb">
+        <div className="mx-auto max-w-4xl">
+          {/* Mobile: simple back link */}
+          <Link
+            to="/events"
+            className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider hover:underline sm:hidden"
+          >
+            <ArrowLeft size={14} /> Events
+          </Link>
+          {/* sm+: full breadcrumb */}
+          <Breadcrumb className="hidden sm:block">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/" className="font-mono text-xs font-bold uppercase">
+                    Home
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/events" className="font-mono text-xs font-bold uppercase">
+                    Events
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-mono text-xs font-bold uppercase">
+                  {event.title}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative w-full overflow-hidden border-b-2 border-black bg-peach/30">
+        {event.banner_url ? (
+          <div className="absolute inset-0">
+            <EventHeroBanner
+              bannerUrl={event.banner_url}
+              title={event.title}
+            />
+            <div className="absolute inset-0 bg-black/50" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-linear-to-br from-peach via-pink-200 to-lime/40" />
+ main
         )}
 
         {ogTags.eventStartTime && (
@@ -1939,7 +2014,18 @@ export default function EventDetailsPage() {
                   <Ticket className="mr-2 h-4 w-4" />
                   {isTicketGenerating ? "Generating…" : "Download Ticket"}
                 </Button>
+ feature/3180-live-subtitles
               )}
+
+                <RequirePermission allowedRoles={["ADMIN", "MODERATOR"]} userRole={userClubRole}>
+                  <CreatePollDialog eventId={eventId} user={user!} onPollCreated={() => refetch()} />
+                </RequirePermission>
+                <RequirePermission allowedRoles={["ADMIN", "MODERATOR", "EDITOR"]} userRole={userClubRole}>
+                  <EditEventDialog event={event} user={user} onSuccess={() => refetch()} />
+                </RequirePermission>
+              </>
+            )}
+ main
 
               {isOrganizer && (
                 <>
